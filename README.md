@@ -79,7 +79,7 @@ uid=0(root) gid=0(root) groups=0(root)
 ```
 
 # Run Hellonode application
-Run the following command to run the playbook
+Run the following command from master instance
 
 ```
 ubuntu@master-instance:~/ansible$ ansible-playbook node-app.yml -k -v
@@ -122,4 +122,4 @@ PLAY RECAP *********************************************************************
 web                        : ok=8    changed=2    unreachable=0    failed=0
 
 ```
-Now the applciation is accessible through `10.128.64.153:9091`
+Now the applciation is accessible via test instance using `10.128.64.153:9091`
