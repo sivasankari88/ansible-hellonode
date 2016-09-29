@@ -1,0 +1,51 @@
+---
+- hosts: web
+  sudo: yes
+
+  vars:
+    - homeDir: /home/ubuntu
+    - appDir: hellonode
+    - sshDir: .ssh
+    - repo: hellonode
+    - account: sivasankari88
+    - privateKey: id_rsa
+
+  tasks:
+  - name: Install Package
+    apt: name="{{ item }}" update_cache=yes state=latest
+    with_items:
+        - build-essential
+        - npm
+        - nodejs-legacy
+        - git
+        - mcrypt
+        - nginx
+        - curl
+
+  - name: Install pm2
+    npm: name=pm2 global=yes production=yes
+
+  - name: Create app directory
+    file: path="{{homeDir}}/{{appDir}}" state=directory
+
+  - name:  Generate rsa key pair locally without passphrase. Add its public key to GIT repository. Below is the instruction to copy private key to the target system.
+    copy: src="{{privateKey}}" dest="{{homeDir}}/{{sshDir}}" mode=0600
+
+  - name: Clone Git Repository
+    git: repo="git@github.com:{{account}}/{{repo}}.git" dest="{{homeDir}}/{{appDir}}" update=yes force=yes accept_hostkey=yes key_file={{homeDir}}/.ssh/id_rsa
+    register: git_finished
+
+  - name: Install dependencies
+    npm: path="{{homeDir}}/{{appDir}}"
+    register: npm_finished
+    when: git_finished.changed
+
+  - name: Stop app
+    sudo_user: ubuntu
+    command: pm2 stop app chdir="{{homeDir}}/{{appDir}}"
+    ignore_errors: yes
+
+  - name: Start app
+    sudo_user: ubuntu
+    command: pm2 start server.js --name app chdir="{{homeDir}}/{{appDir}}"
+#    when: npm_finished.changed
